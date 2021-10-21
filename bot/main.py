@@ -4,12 +4,11 @@ import numpy as np
 import gspread
 from random import shuffle
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Updater,
     CommandHandler,
     CallbackQueryHandler,
-    CallbackContext,
     ConversationHandler,
 )
 
