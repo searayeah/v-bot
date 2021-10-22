@@ -40,8 +40,7 @@ QUESTION = range(1)
 def get_questions(sheet_key, sheet_name, token_names_list, token):
     gc = gspread.service_account_from_dict(token)
     sh = gc.open_by_key(sheet_key)
-    # worksheet = getattr(sh, sheet_name)
-    worksheet = sh.get_worksheet(1)
+    worksheet = getattr(sh, sheet_name)
     log.info("Loaded questions from google sheets")
     return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
 
