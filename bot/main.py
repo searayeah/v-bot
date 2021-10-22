@@ -110,7 +110,7 @@ def form_question(update, context):
         keyboard = set_keyboard(data[0], data[1], data[2])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    if context.user_data["question_photo_url"] != "NO":
+    if context.user_data["question_photo_url"] != "":
         update.message.reply_photo(
             photo=context.user_data["question_photo_url"],
             caption=context.user_data["question"],
@@ -125,7 +125,7 @@ def form_question(update, context):
 def button(update, context):
     query = update.callback_query
     query.answer()
-    if context.user_data["question_photo_url"] != "NO":
+    if context.user_data["question_photo_url"] != "":
         if query.data == context.user_data["answer"]:
             query.edit_message_caption(
                 caption=context.user_data["question"]
