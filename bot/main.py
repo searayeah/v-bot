@@ -65,10 +65,11 @@ def start(update, context):
         context.user_data["questions"].pop(0)
     update.message.reply_text(
         f"Чтобы ресетнуть список вопросов, пропишите /reset. "
-        + f'У вас осталось {len(context.user_data["questions"])} нерешённых вопросов.'
+        + f'У вас осталось *{len(context.user_data["questions"])}* нерешённых вопросов.'
         + " Список сам ресетится каждые 24 часа, "
         + "поэтому ваши решенные вопросы больше этого времени не сохранятся"
-        + " (бесплатный хостинг вайпит серв каждые 24 часа)"
+        + " (бесплатный хостинг вайпит серв каждые 24 часа)",
+        parse_mode="markdown"
     )
     log.info("Start called")
     form_question(update, context)
@@ -150,7 +151,6 @@ def main(bot_token):
         allow_reentry=True,
         states={QUESTION: [CallbackQueryHandler(button)]},
         fallbacks=[CommandHandler("reset", reset)],
-        conversation_timeout=360,
         persistent=True,
         name="conv_handler_save",
     )
