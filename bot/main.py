@@ -69,7 +69,7 @@ def start(update, context):
         + " Список сам ресетится каждые 24 часа, "
         + "поэтому ваши решенные вопросы больше этого времени не сохранятся"
         + " (бесплатный хостинг вайпит серв каждые 24 часа)",
-        parse_mode="markdown"
+        parse_mode="markdown",
     )
     log.info("Start called")
     form_question(update, context)
@@ -97,6 +97,7 @@ def form_question(update, context):
     log.info(f"question data {data}")
     context.user_data["question"] = data.pop(0)
     context.user_data["answer"] = data[0]
+    context.user_data["question_photo_url"] = data.pop()
     keyboard = []
     shuffle(data)
     if any([True for x in data if len(x) >= 60]):
@@ -109,31 +110,63 @@ def form_question(update, context):
         keyboard = set_keyboard(data[0], data[1], data[2])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(context.user_data["question"], reply_markup=reply_markup)
+    if context.user_data["question_photo_url"] != "NO":
+        update.message.reply_photo(
+            photo=context.user_data["question_photo_url"],
+            caption=context.user_data["question"],
+            reply_markup=reply_markup,
+        )
+    else:
+        update.message.reply_text(
+            context.user_data["question"], reply_markup=reply_markup
+        )
 
 
 def button(update, context):
     query = update.callback_query
     query.answer()
-    if query.data == context.user_data["answer"]:
-        query.edit_message_text(
-            text=context.user_data["question"] + "\n\n" + f"Верно - *{query.data}*",
-            parse_mode="markdown",
-        )
+    if context.user_data["question_photo_url"] != "NO":
+        if query.data == context.user_data["answer"]:
+            query.edit_message_caption(
+                caption=context.user_data["question"]
+                + "\n\n"
+                + f"Верно - *{query.data}*",
+                parse_mode="markdown",
+            )
 
-        context.user_data["questions"].pop(context.user_data["question_id"])
-        log.info(
-            f"Right answer, dropping question from pool. "
-            + f'Now pool size {len(context.user_data["questions"])}'
-        )
+            context.user_data["questions"].pop(context.user_data["question_id"])
+            log.info(
+                f"Right answer, dropping question from pool. "
+                + f'Now pool size {len(context.user_data["questions"])}'
+            )
+        else:
+            query.edit_message_caption(
+                caption=context.user_data["question"]
+                + "\n\n"
+                + f'Неверно!!! Правильный ответ - *{context.user_data["answer"]}*',
+                parse_mode="markdown",
+            )
+            log.info("Wrong answer")
     else:
-        query.edit_message_text(
-            text=context.user_data["question"]
-            + "\n\n"
-            + f'Неверно!!! Правильный ответ - *{context.user_data["answer"]}*',
-            parse_mode="markdown",
-        )
-        log.info("Wrong answer")
+        if query.data == context.user_data["answer"]:
+            query.edit_message_text(
+                text=context.user_data["question"] + "\n\n" + f"Верно - *{query.data}*",
+                parse_mode="markdown",
+            )
+
+            context.user_data["questions"].pop(context.user_data["question_id"])
+            log.info(
+                f"Right answer, dropping question from pool. "
+                + f'Now pool size {len(context.user_data["questions"])}'
+            )
+        else:
+            query.edit_message_text(
+                text=context.user_data["question"]
+                + "\n\n"
+                + f'Неверно!!! Правильный ответ - *{context.user_data["answer"]}*',
+                parse_mode="markdown",
+            )
+            log.info("Wrong answer")
     form_question(query, context)
 
 
