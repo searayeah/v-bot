@@ -81,7 +81,6 @@ def form_question(update, context):
     log.info(
         f'Form_question called with {len(context.user_data["questions"])} questions'
     )
-    log.info(context.user_data["questions"])
     if len(context.user_data["questions"]) == 0:
         update.message.reply_text("*Вопросы кончились*", parse_mode="markdown")
         return reset(update, context)
