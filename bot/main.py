@@ -1,5 +1,6 @@
 import os
 import gspread
+import yaml
 from random import shuffle, choice
 
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -8,15 +9,8 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     ConversationHandler,
-    PicklePersistence,
 )
 import logging
-
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
-)
-
-log = logging.getLogger(__name__)
 
 SHEET_KEY = os.environ["sheet_key"]
 SHEET_NAME = "sheet1"
@@ -36,13 +30,13 @@ TOKEN = {item: os.environ[item].replace("\\n", "\n") for item in TOKEN_NAMES_LIS
 BOT_TOKEN = os.environ["bot_token"]
 QUESTION = range(1)
 
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
+)
+log = logging.getLogger(__name__)
 
-def get_questions(sheet_key, sheet_name, token_names_list, token):
-    gc = gspread.service_account_from_dict(token)
-    sh = gc.open_by_key(sheet_key)
-    worksheet = getattr(sh, sheet_name)
-    log.info("Loaded questions from google sheets")
-    return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
+with open("bot/strings.yaml", "r") as stream:
+    strings = yaml.safe_load(stream)
 
 
 def set_keyboard(x, y, z):
@@ -57,137 +51,151 @@ def set_keyboard(x, y, z):
     ]
 
 
+def get_questions(sheet_key, sheet_name, token_names_list, token, user):
+    gc = gspread.service_account_from_dict(token)
+    sh = gc.open_by_key(sheet_key)
+    worksheet = getattr(sh, sheet_name)
+    log.info(f"User {user} loaded questions from Google")
+    return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
+
+
 def start(update, context):
-    if "questions" not in context.user_data:
-        context.user_data["questions"] = get_questions(
-            SHEET_KEY, SHEET_NAME, TOKEN_NAMES_LIST, TOKEN
-        )
-        context.user_data["questions"].pop(0)
+    context.user_data["user"] = update.message.from_user["username"]
+    context.user_data["right_ans_qt"] = 0
+    context.user_data["wrong_ans_qt"] = 0
+
+    log.info(f"""User {context.user_data["user"]} called /start""")
+
+    context.user_data["qstns"] = get_questions(
+        SHEET_KEY, SHEET_NAME, TOKEN_NAMES_LIST, TOKEN, context.user_data["user"]
+    )
+    context.user_data["qstns"].pop(0)
+
     update.message.reply_text(
-        f"Если вы правильно ответили на вопрос, он больше не появится. "
-        + "Чтобы ресетнуть список вопросов, пропишите /reset. "
-        + f'У вас осталось *{len(context.user_data["questions"])}* нерешённых вопросов. '
-        + "Список сам ресетится каждые 24 часа, "
-        + "поэтому ваши решенные вопросы больше этого времени не сохранятся "
-        + "(бесплатный хостинг вайпит серв каждые 24 часа)",
+        strings["start_message"].format(number=len(context.user_data["qstns"])),
         parse_mode="markdown",
     )
-    log.info("Start called")
+
     form_question(update, context)
     return QUESTION
 
 
 def form_question(update, context):
     log.info(
-        f'Form_question called with {len(context.user_data["questions"])} questions'
+        f"""User {context.user_data["user"]} has {len(context.user_data["qstns"])} unanswered questions"""
     )
-    if len(context.user_data["questions"]) == 0:
-        update.message.reply_text("*Вопросы кончились*", parse_mode="markdown")
-        return reset(update, context)
-    context.user_data["question_id"] = choice(
-        list(context.user_data["questions"].keys())
-    )
-    log.info(f'Random question with number {context.user_data["question_id"]}')
-    data = list(
-        map(
-            str,
-            context.user_data["questions"][context.user_data["question_id"]],
+
+    if len(context.user_data["qstns"]) == 0:
+        update.message.reply_text(strings["ending_message"], parse_mode="markdown")
+        log.info(
+            f"""User {context.user_data["user"]} ran out of questions, calling /reset"""
         )
+        return reset(update, context)
+
+    context.user_data["quest_id"] = choice(list(context.user_data["qstns"].keys()))
+    log.info(
+        f"""User {context.user_data["user"]} rolled {context.user_data["quest_id"]} question"""
     )
-    log.info(f"question data {data}")
-    context.user_data["question"] = data.pop(0)
-    context.user_data["answer"] = data[0]
-    context.user_data["question_photo_url"] = data.pop()
+
+    data = list(map(str, context.user_data["qstns"][context.user_data["quest_id"]]))
+    log.info(f"""User {context.user_data["user"]} question data {data}""")
+
+    context.user_data["quest"] = data.pop(0)
+    context.user_data["ans"] = data[0]
+    context.user_data["quest_photo"] = data.pop()
     keyboard = []
     shuffle(data)
+
     if any([True for x in data if len(x) >= 32]):
-        context.user_data["answer"] = str(data.index(context.user_data["answer"]) + 1)
-        context.user_data[
-            "question"
-        ] = f'{context.user_data["question"]}\n\n1.{data[0]}\n\n2.{data[1]}\n\n3.{data[2]}'
+        context.user_data["ans"] = str(data.index(context.user_data["ans"]) + 1)
+        context.user_data["quest"] = strings["long_question"].format(
+            question=context.user_data["quest"],
+            response0=data[0],
+            response1=data[1],
+            response2=data[2],
+        )
         keyboard = set_keyboard("1", "2", "3")
     else:
         keyboard = set_keyboard(data[0], data[1], data[2])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
-    if context.user_data["question_photo_url"] != "":
+
+    if context.user_data["quest_photo"] != "":
         update.message.reply_photo(
-            photo=context.user_data["question_photo_url"],
-            caption=context.user_data["question"],
+            photo=context.user_data["quest_photo"],
+            caption=context.user_data["quest"],
             reply_markup=reply_markup,
         )
     else:
-        update.message.reply_text(
-            context.user_data["question"], reply_markup=reply_markup
-        )
+        update.message.reply_text(context.user_data["quest"], reply_markup=reply_markup)
 
 
 def button(update, context):
     query = update.callback_query
     query.answer()
-    if context.user_data["question_photo_url"] != "":
-        if query.data == context.user_data["answer"]:
-            query.edit_message_caption(
-                caption=context.user_data["question"]
-                + "\n\n"
-                + f"Верно - *{query.data}*",
-                parse_mode="markdown",
-            )
 
-            context.user_data["questions"].pop(context.user_data["question_id"])
-            log.info(
-                f"Right answer, dropping question from pool. "
-                + f'Now pool size {len(context.user_data["questions"])}'
-            )
-        else:
-            query.edit_message_caption(
-                caption=context.user_data["question"]
-                + "\n\n"
-                + f'Неверно!!! Правильный ответ - *{context.user_data["answer"]}*',
-                parse_mode="markdown",
-            )
-            log.info("Wrong answer")
+    edit_type, message_type = (
+        ("edit_message_caption", "caption")
+        if context.user_data["quest_photo"] != ""
+        else ("edit_message_text", "text")
+    )
+
+    answer = (
+        "right_answer" if query.data == context.user_data["ans"] else "wrong_answer"
+    )
+
+    getattr(query, edit_type)(
+        **{
+            message_type: strings[answer].format(
+                question=context.user_data["quest"],
+                answer=context.user_data["ans"],
+            ),
+            "parse_mode": "markdown",
+        }
+    )
+
+    if answer == "right_answer":
+        context.user_data["right_ans_qt"] += 1
+        context.user_data["qstns"].pop(context.user_data["quest_id"])
     else:
-        if query.data == context.user_data["answer"]:
-            query.edit_message_text(
-                text=context.user_data["question"] + "\n\n" + f"Верно - *{query.data}*",
-                parse_mode="markdown",
-            )
+        context.user_data["wrong_ans_qt"] += 1
 
-            context.user_data["questions"].pop(context.user_data["question_id"])
-            log.info(
-                f"Right answer, dropping question from pool. "
-                + f'Now pool size {len(context.user_data["questions"])}'
-            )
-        else:
-            query.edit_message_text(
-                text=context.user_data["question"]
-                + "\n\n"
-                + f'Неверно!!! Правильный ответ - *{context.user_data["answer"]}*',
-                parse_mode="markdown",
-            )
-            log.info("Wrong answer")
+    log.info(f"""User {context.user_data["user"]} got the {answer}""")
+
     form_question(query, context)
 
 
 def reset(update, context):
+    stats(update, context)
     context.user_data.clear()
-    update.message.reply_text("Пропишите /start, чтобы начать по новой")
+    update.message.reply_text(strings["reset_message"])
     return ConversationHandler.END
 
 
+def stats(update, context):
+    if "right_ans_qt" not in context.user_data:
+        update.message.reply_text(strings["nothing_message"])
+    update.message.reply_text(
+        strings["stats_message"].format(
+            right_number=context.user_data["right_ans_qt"],
+            wrong_number=context.user_data["wrong_ans_qt"],
+            remaining_number=len(context.user_data["qstns"]),
+        ),
+        parse_mode="markdown",
+    )
+
+
 def main(bot_token):
-    persistence = PicklePersistence(filename="bot/base", store_callback_data=True)
-    updater = Updater(bot_token, persistence=persistence, use_context=True)
+    updater = Updater(bot_token)
+
     conv_handler = ConversationHandler(
         entry_points=[CommandHandler("start", start)],
-        allow_reentry=True,
+        allow_reentry=False,
         states={QUESTION: [CallbackQueryHandler(button)]},
         fallbacks=[CommandHandler("reset", reset)],
-        persistent=True,
-        name="conv_handler_save",
     )
     updater.dispatcher.add_handler(conv_handler)
+    updater.dispatcher.add_handler(CommandHandler("stats", stats))
 
     updater.start_polling()
     updater.idle()
