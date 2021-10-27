@@ -66,6 +66,8 @@ def start(update, context):
 
     log.info(f"""User {context.user_data["user"]} called /start""")
 
+    update.message.reply_text(strings["help_message"], parse_mode="markdown")
+
     context.user_data["qstns"] = get_questions(
         SHEET_KEY, SHEET_NAME, TOKEN_NAMES_LIST, TOKEN, context.user_data["user"]
     )
@@ -168,7 +170,7 @@ def button(update, context):
 def reset(update, context):
     stats(update, context)
     context.user_data.clear()
-    update.message.reply_text(strings["reset_message"])
+    update.message.reply_text(strings["reset_message"], parse_mode="markdown")
     return ConversationHandler.END
 
 
@@ -185,6 +187,14 @@ def stats(update, context):
     )
 
 
+def extra(update, context):
+    update.message.reply_text(strings["extra"], parse_mode="markdown")
+
+
+def commands(update, context):
+    update.message.reply_text(strings["help"], parse_mode="markdown")
+
+
 def main(bot_token):
     updater = Updater(bot_token)
 
@@ -196,6 +206,8 @@ def main(bot_token):
     )
     updater.dispatcher.add_handler(conv_handler)
     updater.dispatcher.add_handler(CommandHandler("stats", stats))
+    updater.dispatcher.add_handler(CommandHandler("extra", extra))
+    updater.dispatcher.add_handler(CommandHandler("help", commands))
 
     updater.start_polling()
     updater.idle()
