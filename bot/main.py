@@ -175,24 +175,29 @@ def reset(update, context):
 
 
 def stats(update, context):
+
     if "right_ans_qt" not in context.user_data:
         update.message.reply_text(strings["nothing_message"])
-    update.message.reply_text(
-        strings["stats_message"].format(
-            right_number=context.user_data["right_ans_qt"],
-            wrong_number=context.user_data["wrong_ans_qt"],
-            remaining_number=len(context.user_data["qstns"]),
-        ),
-        parse_mode="markdown",
-    )
+    else:
+        update.message.reply_text(
+            strings["stats_message"].format(
+                right_number=context.user_data["right_ans_qt"],
+                wrong_number=context.user_data["wrong_ans_qt"],
+                remaining_number=len(context.user_data["qstns"]),
+            ),
+            parse_mode="markdown",
+        )
+        log.info(f"""User {context.user_data["user"]} called stats""")
 
 
 def extra(update, context):
     update.message.reply_text(strings["extra"], parse_mode="markdown")
+    log.info(f"""User {context.user_data["user"]} called extra""")
 
 
 def commands(update, context):
     update.message.reply_text(strings["help"], parse_mode="markdown")
+    log.info(f"""User {context.user_data["user"]} called help""")
 
 
 def main(bot_token):
