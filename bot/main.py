@@ -54,7 +54,8 @@ def set_keyboard(x, y, z):
 def get_questions(sheet_key, sheet_name, token_names_list, token, user):
     gc = gspread.service_account_from_dict(token)
     sh = gc.open_by_key(sheet_key)
-    worksheet = getattr(sh, sheet_name)
+    # worksheet = getattr(sh, sheet_name)
+    worksheet = sh.get_worksheet(1)
     log.info(f"User {user} loaded questions from Google")
     return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
 
@@ -78,8 +79,7 @@ def start(update, context):
         parse_mode="markdown",
     )
 
-    form_question(update, context)
-    return QUESTION
+    return form_question(update, context)
 
 
 def form_question(update, context):
@@ -131,6 +131,8 @@ def form_question(update, context):
     else:
         update.message.reply_text(context.user_data["quest"], reply_markup=reply_markup)
 
+    return QUESTION
+
 
 def button(update, context):
     query = update.callback_query
@@ -164,10 +166,11 @@ def button(update, context):
 
     log.info(f"""User {context.user_data["user"]} got the {answer}""")
 
-    form_question(query, context)
+    return form_question(query, context)
 
 
 def reset(update, context):
+    log.info(f"""User {context.user_data["user"]} called reset""")
     stats(update, context)
     context.user_data.clear()
     update.message.reply_text(strings["reset_message"], parse_mode="markdown")
@@ -175,9 +178,9 @@ def reset(update, context):
 
 
 def stats(update, context):
-
     if "right_ans_qt" not in context.user_data:
         update.message.reply_text(strings["nothing_message"])
+        log.info(f"""User called stats""")
     else:
         update.message.reply_text(
             strings["stats_message"].format(
@@ -192,12 +195,12 @@ def stats(update, context):
 
 def extra(update, context):
     update.message.reply_text(strings["extra"], parse_mode="markdown")
-    log.info(f"""User {context.user_data["user"]} called extra""")
+    log.info(f"""User called extra""")
 
 
 def commands(update, context):
     update.message.reply_text(strings["help"], parse_mode="markdown")
-    log.info(f"""User {context.user_data["user"]} called help""")
+    log.info(f"""User called help""")
 
 
 def main(bot_token):
