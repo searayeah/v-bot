@@ -179,7 +179,7 @@ def reset(update, context):
 
 def stats(update, context):
     if "right_ans_qt" not in context.user_data:
-        update.message.reply_text(strings["nothing_message"])
+        update.message.reply_text(strings["nothing_message"], parse_mode="markdown")
         log.info(f"""User called stats""")
     else:
         update.message.reply_text(
