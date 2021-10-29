@@ -214,6 +214,7 @@ def main(bot_token):
         states={QUESTION: [CallbackQueryHandler(button)]},
         fallbacks=[CommandHandler("reset", reset)],
     )
+
     updater.dispatcher.add_handler(conv_handler)
     updater.dispatcher.add_handler(CommandHandler("stats", stats))
     updater.dispatcher.add_handler(CommandHandler("extra", extra))
