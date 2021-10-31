@@ -40,10 +40,24 @@ with open("bot/strings.yaml", "r") as stream:
     strings = yaml.safe_load(stream)
 
 
-def set_keyboard(x, y, z):
+def set_keyboard_small(x, y, z):
     return [
         [
             InlineKeyboardButton(x, callback_data=x),
+            InlineKeyboardButton(y, callback_data=y),
+        ],
+        [
+            InlineKeyboardButton(z, callback_data=z),
+        ],
+    ]
+
+
+def set_keyboard_wide(x, y, z):
+    return [
+        [
+            InlineKeyboardButton(x, callback_data=x),
+        ],
+        [
             InlineKeyboardButton(y, callback_data=y),
         ],
         [
@@ -116,9 +130,12 @@ def form_question(update, context):
             response1=data[1],
             response2=data[2],
         )
-        keyboard = set_keyboard("1", "2", "3")
+        keyboard = set_keyboard_small("1", "2", "3")
     else:
-        keyboard = set_keyboard(data[0], data[1], data[2])
+        if any([True for x in data if len(x) >= 16]):
+            keyboard = set_keyboard_wide(data[0], data[1], data[2])
+        else:
+            keyboard = set_keyboard_small(data[0], data[1], data[2])
 
     reply_markup = InlineKeyboardMarkup(keyboard)
 
@@ -207,7 +224,9 @@ def commands(update, context):
 
 
 def donate(update, context):
-    update.message.reply_text(strings["donate_message"].format(number=DONATE_NUMBER), parse_mode="markdown")
+    update.message.reply_text(
+        strings["donate_message"].format(number=DONATE_NUMBER), parse_mode="markdown"
+    )
     log.info(f"""User called donate""")
 
 
