@@ -29,6 +29,7 @@ TOKEN_NAMES_LIST = [
 TOKEN = {item: os.environ[item].replace("\\n", "\n") for item in TOKEN_NAMES_LIST}
 BOT_TOKEN = os.environ["bot_token"]
 QUESTION = range(1)
+DONATE_NUMBER = os.environ["number"]
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -205,6 +206,11 @@ def commands(update, context):
     log.info(f"""User called help""")
 
 
+def donate(update, context):
+    update.message.reply_text(strings["donate_message"].format(number=DONATE_NUMBER), parse_mode="markdown")
+    log.info(f"""User called donate""")
+
+
 def main(bot_token):
     updater = Updater(bot_token)
 
@@ -219,6 +225,7 @@ def main(bot_token):
     updater.dispatcher.add_handler(CommandHandler("stats", stats))
     updater.dispatcher.add_handler(CommandHandler("extra", extra))
     updater.dispatcher.add_handler(CommandHandler("help", commands))
+    updater.dispatcher.add_handler(CommandHandler("donate", donate))
 
     updater.start_polling()
     updater.idle()
