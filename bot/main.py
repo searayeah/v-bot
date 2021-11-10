@@ -71,6 +71,14 @@ def get_questions(sheet_key, sheet_name, token_names_list, token, user):
     sh = gc.open_by_key(sheet_key)
     worksheet = getattr(sh, sheet_name)
     log.info(f"User {user} loaded questions from Google")
+    users_sheet = sh.get_worksheet(1)
+    users_list = users_sheet.col_values(1)
+    if user not in users_list:
+        users_list.append(user)
+        users_sheet.resize(1)
+        users_sheet.clear()
+        log.info(f"User {user} is NEW")
+        users_sheet.update([users_list], major_dimension="COLUMNS")
     return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
 
 
