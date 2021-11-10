@@ -242,12 +242,12 @@ def donate(update, context):
 
 def false_start(update, context):
     update.message.reply_text(strings["false_start"], parse_mode="markdown")
-    log.info(f"""User called false start""")
+    log.info(f"""User called false_start""")
 
 
 def false_reset(update, context):
     update.message.reply_text(strings["false_reset"], parse_mode="markdown")
-    log.info(f"""User called false reset""")
+    log.info(f"""User called false_reset""")
 
 
 def main(bot_token):
