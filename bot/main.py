@@ -9,6 +9,8 @@ from telegram.ext import (
     CommandHandler,
     CallbackQueryHandler,
     ConversationHandler,
+    MessageHandler,
+    Filters,
 )
 import logging
 
@@ -238,6 +240,16 @@ def donate(update, context):
     log.info(f"""User called donate""")
 
 
+def false_start(update, context):
+    update.message.reply_text(strings["false_start"], parse_mode="markdown")
+    log.info(f"""User called false start""")
+
+
+def false_reset(update, context):
+    update.message.reply_text(strings["false_reset"], parse_mode="markdown")
+    log.info(f"""User called false reset""")
+
+
 def main(bot_token):
     updater = Updater(bot_token)
 
@@ -249,10 +261,16 @@ def main(bot_token):
     )
 
     updater.dispatcher.add_handler(conv_handler)
+
     updater.dispatcher.add_handler(CommandHandler("stats", stats))
     updater.dispatcher.add_handler(CommandHandler("extra", extra))
     updater.dispatcher.add_handler(CommandHandler("help", commands))
     updater.dispatcher.add_handler(CommandHandler("donate", donate))
+
+    updater.dispatcher.add_handler(CommandHandler("start", false_start))
+    updater.dispatcher.add_handler(CommandHandler("reset", false_reset))
+
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, commands))
 
     updater.start_polling()
     updater.idle()
