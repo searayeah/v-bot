@@ -15,7 +15,8 @@ from telegram.ext import (
 import logging
 
 SHEET_KEY = os.environ["sheet_key"]
-SHEET_NAME = "sheet1"
+SHEET_NAME_TECH = "tech"
+SHEET_NAME_USERS = "users"
 TOKEN_NAMES_LIST = [
     "type",
     "project_id",
@@ -68,19 +69,21 @@ def set_keyboard_wide(x, y, z):
     ]
 
 
-def get_questions(sheet_key, sheet_name, token_names_list, token, user):
+def get_questions(
+    sheet_key, sheet_name_tech, sheet_name_users, token_names_list, token, user, chat_id
+):
     gc = gspread.service_account_from_dict(token)
     sh = gc.open_by_key(sheet_key)
-    worksheet = getattr(sh, sheet_name)
+    worksheet = sh.worksheet(sheet_name_tech)
     log.info(f"User {user} loaded questions from Google")
-    users_sheet = sh.get_worksheet(1)
+    users_sheet = sh.worksheet(sheet_name_users)
     users_list = users_sheet.col_values(1)
-    if user not in users_list:
-        users_list.append(user)
-        users_sheet.resize(1)
-        users_sheet.clear()
-        log.info(f"User {user} is NEW")
-        users_sheet.update([users_list], major_dimension="COLUMNS")
+    chat_ids = users_sheet.col_values(2)
+    user_info = dict(zip(users_list, chat_ids))
+    user_info[user] = chat_id
+    users_sheet.resize(1)
+    users_sheet.clear()
+    users_sheet.update(list(map(list, user_info.items())))
     return {key: value for (key, value) in enumerate(worksheet.get_all_values())}
 
 
@@ -94,7 +97,13 @@ def start(update, context):
     update.message.reply_text(strings["help_message"], parse_mode="markdown")
 
     context.user_data["qstns"] = get_questions(
-        SHEET_KEY, SHEET_NAME, TOKEN_NAMES_LIST, TOKEN, context.user_data["user"]
+        SHEET_KEY,
+        SHEET_NAME_TECH,
+        SHEET_NAME_USERS,
+        TOKEN_NAMES_LIST,
+        TOKEN,
+        context.user_data["user"],
+        update.message.chat_id,
     )
     context.user_data["qstns"].pop(0)
 
@@ -250,6 +259,12 @@ def false_reset(update, context):
     log.info(f"""User called false_reset""")
 
 
+def sticker_pack(update, context):
+    update.message.reply_text(strings["sticker_pack"], parse_mode="markdown")
+    print(update.message.chat_id)
+    log.info(f"""User called sticker_pack""")
+
+
 def main(bot_token):
     updater = Updater(bot_token)
 
@@ -266,6 +281,7 @@ def main(bot_token):
     updater.dispatcher.add_handler(CommandHandler("extra", extra))
     updater.dispatcher.add_handler(CommandHandler("help", commands))
     updater.dispatcher.add_handler(CommandHandler("donate", donate))
+    updater.dispatcher.add_handler(CommandHandler("stickers", sticker_pack))
 
     updater.dispatcher.add_handler(CommandHandler("start", false_start))
     updater.dispatcher.add_handler(CommandHandler("reset", false_reset))
