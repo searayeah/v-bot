@@ -580,6 +580,10 @@ def tech_finish(update, context):
     log.info(f"User {context.user_data[USER_ID]} called tech_finish")
 
 
+def tech_help(update, context):
+    update.message.reply_text(strings["tech_test_back"])
+
+
 def end_tech_viewing(update, context):
     log.info(f"User {context.user_data[USER_ID]} called end_tech_viewing")
     select_exam(update, context)
@@ -635,7 +639,8 @@ def main(bot_token):
                 CallbackQueryHandler(
                     tech_test_buttons,
                     pattern=f"^((?!{str(END)}).)*$",
-                )
+                ),
+                MessageHandler(Filters.text & ~Filters.command, tech_help),
             ],
         },
         fallbacks=[
