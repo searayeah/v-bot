@@ -35,7 +35,7 @@ DONATE_NUMBER = os.environ["number"]
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
+    level=logging.DEBUG,
 )
 log = logging.getLogger(__name__)
 
@@ -489,6 +489,7 @@ def tech_test_buttons(update, context):
         if query.data == context.user_data[TECH_ANS]
         else "tech_test_wrong_ans"
     )
+    print("lolo")
 
     getattr(query, edit_type)(
         **{
@@ -499,6 +500,8 @@ def tech_test_buttons(update, context):
             "parse_mode": "markdown",
         }
     )
+
+    print("lol1")
 
     if answer == "tech_test_right_ans":
         context.user_data[TECH_NUM_RIGHT_ANS] += 1
@@ -511,6 +514,7 @@ def tech_test_buttons(update, context):
         log.info(f"User {context.user_data[USER_ID]} ran out of questions")
         tech_finish(update, context)
     else:
+        print("lol2")
         tech_test(update, context)
 
 
@@ -638,7 +642,7 @@ def main(bot_token):
             STARTING_TECH: [
                 CallbackQueryHandler(
                     tech_test_buttons,
-                    pattern=f"^((?!{str(END)}).)*$",
+                    # pattern=f"^((?!{str(END)}).)*$",
                 ),
                 MessageHandler(Filters.text & ~Filters.command, tech_help),
             ],
@@ -648,7 +652,6 @@ def main(bot_token):
                 end_tech_test,
                 pattern="^" + str(END) + "$",
             ),
-            CommandHandler("start", start_main),
             CommandHandler("back", start_tech),
         ],
         map_to_parent={
