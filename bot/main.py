@@ -14,8 +14,11 @@ from telegram.ext import (
 import logging
 from helper import set_keyboard_small, set_keyboard_wide
 
-logging.getLogger().setLevel(logging.INFO)
-logger = logging.getLogger(__name__)
+logging.basicConfig(
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    level=logging.DEBUG,
+)
+log = logging.getLogger(__name__)
 
 with open(os.getcwd() + "/bot/strings.yaml", "r") as stream:
     strings = yaml.safe_load(stream)
