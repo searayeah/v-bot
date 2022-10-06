@@ -1,46 +1,31 @@
-back: "Назад"
-mashtak: "Маштак наблюдает за тобой..."
-# 1st level
-main_start: "Бот для подготовки к экзаменам военки. Выбери действие"
-main:
-  - "Экзамены"
-  - "Стикерпаки"
-  - "Донат"
-  - "Нашел баг/ошибку"
-  - "Выход"
-# 2nd level 1
-sticker_packs: "https://t.me/addstickers/voenkavshe\nhttps://t.me/addstickers/HseArmy"
-donate: "Если хотите закинуть мне на пиво то:\n*{number}*\n(Либо на карту Tinkoff, либо на мобилу, оператор Yota)\n❤️"
-bug: "Пиши *@searayeah*"
-# 2nd level 2
-exams_select: "Выберите экзамен"
-exams:
-  - "Техническая"
-  - "Комплексный"
-  - "Огневая 2 курс"
-# 3rd level 1
-tech_start: "Выбери действие"
-tech:
-  - Начать тест
-  - Статистика
-  - Доп. материалы
-  - Сбросить прогресс
-tech_extra: "*Quizlet: https://quizlet.com/_ag5fxz?x=1jqt&i=2e14wv\n\nВопросы-ответы в таблице: https://docs.google.com/spreadsheets/d/1-NaVKR1CPFvFq4A25r8BFzyvlt2eKzoeqkHurG2sRMs/edit?usp=sharing\n\nФайл со скринами билетов c ответами(там есть неправильные): https://docs.google.com/document/d/1PIMejPLKsSei_cdm5cSG7NMJGvHFIlNR/edit?usp=sharing&ouid=117540898307259889545&rtpof=true&sd=true*"
-tech_stats: "*Статистика:\n✅Правильные ответы - {right_number}\n🚫Неправильные ответы - {wrong_number}\n❔Осталось - {remaining_number}*"
-tech_stats_nothing: "*Пока нет ваших данных*"
-tech_reset: "Ваш прогресс сброшен"
-# 3rd level 2
-complex_start: "Пока не готово"
-fire2_start: "Пока не готово"
-# 4th level
-tech_test_options:
-  - "1"
-  - "2"
-  - "3"
-tech_test_start: "Подгружена база с {number} вопросами"
-tech_test_cont: "У вас осталось {number} вопроса(ов)"
-tech_test_long_qstn: "{question}\n\n1. {option0}\n\n2. {option1}\n\n3. {option2}"
-tech_test_right_ans: "{question}\n\n*Верно - {answer}*"
-tech_test_wrong_ans: "{question}\n\n*Неверно! Правильный ответ - {answer}*"
-tech_test_finish: "*Вы решили все вопросы. Погрузимся в этот увлекательный journey ещё раз?*"
-tech_test_back: "Последний вопрос активен, вернуться в меню /back"
+quiz_start: "Вопросов: {number}"
+
+long_question: "{question}\n\n1. {option_0}\n\n2. {option_1}\n\n3. {option_2}"
+right_answer: "{question}\n\n*Верно - {answer}*"
+wrong_answer: "{question}\n\n*Неверно! Правильный ответ - {answer}*"
+
+quiz_finish: |
+  *Вопросы кончились*
+  ✅Правильные ответы - *{right_count}*
+  🚫Неправильные ответы - *{wrong_count}*
+  Начать заново - */start*
+
+false_start: "*Последний вопрос активен*, либо же /cancel чтобы закончить"
+false_cancel: "Тест не начат"
+
+
+help: |
+  Начать тест - /start
+  Доп. инфа - /help
+  Закончить тест - /cancel
+
+  Тест в Quizlet(без вопросов с картинками): https://quizlet.com/_ag5fxz?x=1jqt&i=2e14wv\n\n
+  Вопросы-ответы в таблице: https://docs.google.com/spreadsheets/d/1P-c0Q903g3sNPo0X7bjDxXp_zUIB-hUd
+
+  Гугл диск с контентом: https://drive.google.com/drive/folders/1dXrh7nTbH9JRyONfaAeTzrripG3G3TgQ?usp=sharing
+  Особое внимание к папке Экзы : https://drive.google.com/drive/folders/1od60pDY_z4dHlkzPWfBdpx7y8wOyd4hs?usp=sharing
+
+  Потом ещё сюда выложу гайд, что обязательно нужно взять на сборы
+
+  Ошибки или баги - пишите @searayeah
+
