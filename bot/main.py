@@ -16,9 +16,9 @@ from helper import set_keyboard_small, set_keyboard_wide
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.DEBUG,
+    level=logging.INFO,
 )
-log = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 with open(os.getcwd() + "/bot/strings.yaml", "r") as stream:
     strings = yaml.safe_load(stream)
