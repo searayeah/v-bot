@@ -142,6 +142,7 @@ def form_question(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if context.user_data["question_photo"]:
+        print("photo")
         with open(
             os.getcwd() + "/bot/images/" + context.user_data["question_photo"] + ".png",
             "rb",
