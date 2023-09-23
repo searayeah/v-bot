@@ -13,6 +13,7 @@ from telegram.ext import (
 )
 import logging
 from helper import set_keyboard_small, set_keyboard_wide
+from dotenv import load_dotenv
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
@@ -20,8 +21,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-with open(os.getcwd() + "/bot/strings.yaml", "r") as stream:
+with open(os.getcwd() + "bot/config/strings.yaml", "r") as stream:
     strings = yaml.safe_load(stream)
+
+load_dotenv("../.env/voenka-bot.env")
 
 SHEET_KEY = os.environ["sheet_key"]
 SHEET_NAME_TECH = "tech"
@@ -37,9 +40,10 @@ TOKEN_NAMES_LIST = [
     "token_uri",
     "auth_provider_x509_cert_url",
     "client_x509_cert_url",
+    "universe_domain",
 ]
 TOKEN = {item: os.environ[item].replace("\\n", "\n") for item in TOKEN_NAMES_LIST}
-BOT_TOKEN = os.environ["bot_token"]
+BOT_TOKEN = os.environ["telegram_bot_token"]
 PARSE_MODE = "Markdown"
 
 QUESTION = range(1)
@@ -144,7 +148,7 @@ def form_question(update, context):
     if context.user_data["question_photo"]:
         print("photo")
         with open(
-            os.getcwd() + "/bot/images/" + context.user_data["question_photo"] + ".png",
+            os.getcwd() + "bot/config/images/" + context.user_data["question_photo"] + ".png",
             "rb",
         ) as image:
             update.message.reply_photo(
