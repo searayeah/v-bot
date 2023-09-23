@@ -13,7 +13,6 @@ quiz_finish: |
 false_start: "*Последний вопрос активен*, либо же /cancel чтобы закончить"
 false_cancel: "Тест не начат"
 
-
 help: |
   Тест в Quizlet(без вопросов с картинками): https://quizlet.com/_ag5fxz?x=1jqt&i=2e14wv\n\n
   Вопросы-ответы в таблице: https://docs.google.com/spreadsheets/d/1P-c0Q903g3sNPo0X7bjDxXp_zUIB-hUd
@@ -22,4 +21,3 @@ help: |
   Особое внимание к папке Экзы : https://drive.google.com/drive/folders/1od60pDY_z4dHlkzPWfBdpx7y8wOyd4hs?usp=sharing
 
   Ошибки или баги - пишите @searayeah
-

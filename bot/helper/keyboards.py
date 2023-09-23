@@ -1,5 +1,6 @@
+from telegram import InlineKeyboardButton
 
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 def set_keyboard_small(x, y, z):
     return [
         [

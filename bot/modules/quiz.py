@@ -1,75 +1,19 @@
-import os
-import gspread
-import yaml
-import random
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Updater,
-    CommandHandler,
-    CallbackQueryHandler,
-    ConversationHandler,
-    MessageHandler,
-    Filters,
-)
 import logging
-from helper import set_keyboard_small, set_keyboard_wide
-from dotenv import load_dotenv
+import random
+from bot import SHEET_KEY, SHEET_NAME_TECH, SHEET_NAME_USERS, TOKEN, PARSE_MODE, strings
+from bot.helper.google_sheets import get_questions
+from bot.helper.keyboards import set_keyboard_small, set_keyboard_wide
+from bot import application, strings
+from telegram.ext import ConversationHandler, CommandHandler, CallbackQueryHandler
+from telegram import InlineKeyboardMarkup
 
-logging.basicConfig(
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    level=logging.INFO,
-)
 logger = logging.getLogger(__name__)
-
-with open(os.getcwd() + "bot/config/strings.yaml", "r") as stream:
-    strings = yaml.safe_load(stream)
-
-load_dotenv("../.env/voenka-bot.env")
-
-SHEET_KEY = os.environ["sheet_key"]
-SHEET_NAME_TECH = "tech"
-SHEET_NAME_USERS = "users"
-TOKEN_NAMES_LIST = [
-    "type",
-    "project_id",
-    "private_key_id",
-    "private_key",
-    "client_email",
-    "client_id",
-    "auth_uri",
-    "token_uri",
-    "auth_provider_x509_cert_url",
-    "client_x509_cert_url",
-    "universe_domain",
-]
-TOKEN = {item: os.environ[item].replace("\\n", "\n") for item in TOKEN_NAMES_LIST}
-BOT_TOKEN = os.environ["telegram_bot_token"]
-PARSE_MODE = "Markdown"
+logger.setLevel(logging.INFO)
 
 QUESTION = range(1)
 
 
-def get_questions(sheet_key, sheet_name_tech, sheet_name_users, token, user, chat_id):
-    gc = gspread.service_account_from_dict(token)
-    sh = gc.open_by_key(sheet_key)
-    worksheet = sh.worksheet(sheet_name_tech)
-
-    users_sheet = sh.worksheet(sheet_name_users)
-    users_list = users_sheet.col_values(1)
-    chat_ids = users_sheet.col_values(2)
-    user_info = dict(zip(users_list, chat_ids))
-    user_info[user] = chat_id
-    users_sheet.resize(1)
-    users_sheet.clear()
-    users_sheet.update(list(map(list, user_info.items())))
-
-    questions = {key: value for (key, value) in enumerate(worksheet.get_all_values())}
-    questions.pop(0)
-    logger.info(f"User {user} loaded questions from Google")
-    return questions
-
-
-def start(update, context):
+async def start(update, context):
     context.user_data.clear()
     context.user_data["username"] = update.message.from_user["username"]
     context.user_data["right_count"] = 0
@@ -86,21 +30,21 @@ def start(update, context):
         update.message.chat_id,
     )
 
-    update.message.reply_text(
+    await update.message.reply_text(
         text=strings["quiz_start"].format(number=len(context.user_data["questions"])),
         parse_mode=PARSE_MODE,
     )
 
-    return form_question(update, context)
+    return await form_question(update, context)
 
 
-def form_question(update, context):
+async def form_question(update, context):
     logger.info(
         f"User {context.user_data['username']} has {len(context.user_data['questions'])} unanswered questions"
     )
 
     if len(context.user_data["questions"]) == 0:
-        update.message.reply_text(
+        await update.message.reply_text(
             text=strings["quiz_finish"].format(
                 right_count=context.user_data["right_count"],
                 wrong_count=context.user_data["wrong_count"],
@@ -146,26 +90,26 @@ def form_question(update, context):
     reply_markup = InlineKeyboardMarkup(keyboard)
 
     if context.user_data["question_photo"]:
-        print("photo")
+        # print("photo")
         with open(
-            os.getcwd() + "bot/config/images/" + context.user_data["question_photo"] + ".png",
+            "bot/config/images/" + context.user_data["question_photo"] + ".png",
             "rb",
         ) as image:
-            update.message.reply_photo(
+            await update.message.reply_photo(
                 photo=image,
                 caption=context.user_data["question"],
                 reply_markup=reply_markup,
             )
     else:
-        update.message.reply_text(
+        await update.message.reply_text(
             context.user_data["question"], reply_markup=reply_markup
         )
     return QUESTION
 
 
-def answer_button(update, context):
+async def answer_button(update, context):
     query = update.callback_query
-    query.answer()
+    await query.answer()
 
     edit_type, message_type = (
         ("edit_message_caption", "caption")
@@ -177,7 +121,7 @@ def answer_button(update, context):
         "right_answer" if query.data == context.user_data["answer"] else "wrong_answer"
     )
 
-    getattr(query, edit_type)(
+    await getattr(query, edit_type)(
         **{
             message_type: strings[answer].format(
                 question=context.user_data["question"],
@@ -195,16 +139,11 @@ def answer_button(update, context):
 
     logger.info(f"User {context.user_data['username']} got the {answer}")
 
-    return form_question(query, context)
+    return await form_question(query, context)
 
 
-def help(update, context):
-    update.message.reply_text(strings["help"], disable_web_page_preview=True)
-    logger.info(f"User {update.message.from_user['username']} called help")
-
-
-def cancel(update, context):
-    update.message.reply_text(
+async def cancel(update, context):
+    await update.message.reply_text(
         text=strings["quiz_finish"].format(
             right_count=context.user_data["right_count"],
             wrong_count=context.user_data["wrong_count"],
@@ -215,37 +154,24 @@ def cancel(update, context):
     return ConversationHandler.END
 
 
-def false_start(update, context):
-    update.message.reply_text(strings["false_start"], parse_mode=PARSE_MODE)
+async def false_start(update, context):
+    await update.message.reply_text(strings["false_start"], parse_mode=PARSE_MODE)
     logger.info(f"User {update.message.from_user['username']} called false_start")
 
 
-def false_cancel(update, context):
-    update.message.reply_text(strings["false_cancel"], parse_mode=PARSE_MODE)
+async def false_cancel(update, context):
+    await update.message.reply_text(strings["false_cancel"], parse_mode=PARSE_MODE)
     logger.info(f"User {update.message.from_user['username']} called false_cancel")
 
 
-def main(bot_token):
-    updater = Updater(bot_token)
+conv_handler = ConversationHandler(
+    entry_points=[CommandHandler("start", start)],
+    allow_reentry=False,
+    states={QUESTION: [CallbackQueryHandler(answer_button)]},
+    fallbacks=[CommandHandler("cancel", cancel)],
+)
 
-    conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start)],
-        allow_reentry=False,
-        states={QUESTION: [CallbackQueryHandler(answer_button)]},
-        fallbacks=[CommandHandler("cancel", cancel)],
-    )
+application.add_handler(conv_handler)
 
-    updater.dispatcher.add_handler(conv_handler)
-
-    updater.dispatcher.add_handler(CommandHandler("start", false_start))
-    updater.dispatcher.add_handler(CommandHandler("cancel", false_cancel))
-
-    updater.dispatcher.add_handler(CommandHandler("help", help))
-
-    updater.dispatcher.add_handler(MessageHandler(Filters.text, help))
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == "__main__":
-    main(BOT_TOKEN)
+application.add_handler(CommandHandler("start", false_start))
+application.add_handler(CommandHandler("cancel", false_cancel))
